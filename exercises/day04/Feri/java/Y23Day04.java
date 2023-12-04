@@ -1,16 +1,11 @@
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Scanner;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * see: https://adventofcode.com/2023/day/04
@@ -86,6 +81,21 @@ public class Y23Day04 {
 
 	
 	public static void mainPart2(String inputFile) {
+		Map<Integer, Long> cardNum2Factor = new HashMap<>();
+		long sumCards = 0;
+		for (InputData data:new InputProcessor(inputFile)) {
+			System.out.println(data);
+			int currentCardNum = data.cardnum;
+			long currentCardFactor = cardNum2Factor.getOrDefault(currentCardNum, 1L);
+			sumCards += currentCardFactor;
+			data.ownNums.retainAll(data.winNums);
+			int cntWins = data.ownNums.size();
+			System.out.println(currentCardFactor+" x Card "+currentCardNum+" wins "+cntWins);
+			for (int nextCardNum=currentCardNum+1; nextCardNum<=currentCardNum+cntWins; nextCardNum++) {
+				cardNum2Factor.put(nextCardNum, cardNum2Factor.getOrDefault(nextCardNum, 1L) + currentCardFactor);
+			}
+		}
+		System.out.println(sumCards);
 	}
 
 	
@@ -96,8 +106,8 @@ public class Y23Day04 {
 		mainPart1("exercises/day04/Feri/input.txt");            // < 104960
 		System.out.println("---------------");
 		System.out.println("--- PART II ---");
-		mainPart2("exercises/day04/Feri/input-example.txt");
-//		mainPart2("exercises/day04/Feri/input.txt");     
+//		mainPart2("exercises/day04/Feri/input-example.txt");
+		mainPart2("exercises/day04/Feri/input.txt");     
 		System.out.println("---------------");    // 
 	}
 	
