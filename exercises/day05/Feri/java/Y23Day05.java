@@ -138,7 +138,9 @@ public class Y23Day05 {
 			return null;
 		}
 		@Override public String toString() {
-			return sourceName+"->"+targetName+"["+sourceIndexStart+".."+sourceIndexEnd+"|+"+(targetIndexStart-sourceIndexStart)+"]";
+			long offset = (targetIndexStart-sourceIndexStart);
+			String offsetString = offset == 0 ? "" : (offset < 0 ? "|"+offset : "|+"+offset);
+			return sourceName+"->"+targetName+"["+sourceIndexStart+".."+sourceIndexEnd+offsetString+"]";
 		}
 		
 	}
@@ -367,8 +369,8 @@ public class Y23Day05 {
 		mainPart1("exercises/day05/Feri/input.txt");             
 		System.out.println("---------------");
 		System.out.println("--- PART II ---");
-//		mainPart2("exercises/day05/Feri/input-example.txt");
-		mainPart2("exercises/day05/Feri/input.txt");     
+		mainPart2("exercises/day05/Feri/input-example.txt");
+//		mainPart2("exercises/day05/Feri/input.txt");     
 		System.out.println("---------------");    // 
 	}
 	
