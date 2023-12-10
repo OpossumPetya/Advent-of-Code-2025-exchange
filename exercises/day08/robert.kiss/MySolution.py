@@ -76,6 +76,23 @@ def solve2(filename):
     '''
 
 
+from datetime import datetime 
+start_time = datetime.now() 
+print("---")
 solve2("sample.txt")
+print("---")
 solve2("sample2.txt")
+print("---")
 solve2("input.txt")
+print("---")
+time_elapsed = datetime.now() - start_time 
+print('Time elapsed (hh:mm:ss.ms) {}'.format(time_elapsed))
+
+'''
+---
+[(0, 'GQA'), (0, 'AAA'), (0, 'XCA'), (0, 'HBA'), (0, 'GVA'), (0, 'NVA')]
+18024643846273
+cache: {(0, 'GQA'): (22411, 'TKZ'), (0, 'AAA'): (18727, 'ZZZ'), (0, 'ZZZ'): (18727, 'ZZZ'), (0, 'XCA'): (24253, 'LLZ'), (0, 'LLZ'): (24253, 'LLZ'), (0, 'HBA'): (14429, 'JLZ'), (0, 'JLZ'): (14429, 'JLZ'), (0, 'GVA'): (16271, 'KJZ'), (0, 'KJZ'): (16271, 'KJZ'), (0, 'NVA'): (20569, 'HVZ'), (0, 'HVZ'): (20569, 'HVZ'), (0, 'TKZ'): (22411, 'TKZ')}
+---
+Time elapsed (hh:mm:ss.ms) 0:30:42.186078
+'''

@@ -1,7 +1,6 @@
-import jdk.internal.jshell.tool.JShellToolBuilder;
-
-import java.util.ArrayList;
-import java.util.List;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
@@ -9,95 +8,109 @@ import java.util.stream.Collectors;
 public class MySolution extends MySolutionBase {
 
 
-	private String insturctions;
+	private char[] insturctions;
 	private final Map<String, Node> nodes = new TreeMap<>();
 
 	public MySolution(String inputFilename) {
         super(inputFilename);
-		this.insturctions = getInputLinesAsList().get(0);
-		for (String line:getInputLinesAsList()) {
+		this.insturctions = getInputLinesAsList().get(0).toCharArray();
+		for (String line:getInputLinesAsList().subList(2,getInputLinesAsList().size())) {
 			var node = Node.createNode(line);
-			if (node != null) {
-				this.nodes.put(node.pos, node);
+			if (node!=null) {
+				this.nodes.put(node.nodeid, node);
 			}
 		}
-
     }
 
     private MySolution play1() {
 		int step = 0;
 		var myNode = this.nodes.get("AAA");
-		while (!myNode.pos.equals("ZZZ")) {
-			var myStep = insturctions.charAt(step % insturctions.length());
-			//System.out.println(myNode +"  "+myStep);
-			myNode = nodes.get(myNode.getNext(myStep));
+		while (!myNode.nodeid.equals("ZZZ")) {
+			var myInsturction = insturctions[step % insturctions.length];
+			//System.out.println(myNode +"  "+myInsturction);
+			myNode = nodes.get(myNode.getNextNodeId(myInsturction));
 			step +=1;
 		}
+		//System.out.println(myNode);
 		System.out.println(step);
+		System.out.println("---");
         return this;
 	}
 
 
 
-	Map<String,Jump> jumps = new TreeMap<>();
-	Jump getJump(String nodeid, long step) {
-		int instructionPointer = (int)(step % insturctions.length());
-		if (jumps.containsKey(nodeid+instructionPointer)) {
-			return jumps.get(nodeid+instructionPointer);
+	Map<JumpPos,Jump> jumps = new TreeMap<>();
+
+	private Ghost ghoststep(Ghost myGhost) {
+		var jumpStart = new JumpPos(myGhost.nodeid, (int)(myGhost.step % this.insturctions.length));
+		Jump jump = jumps.get(jumpStart);
+		if (jump != null){
+			return new Ghost(myGhost.step + jump.dist, jump.nodeid);
 		}
-		int dist = 0;
-		var myNode = this.nodes.get(nodeid);
-		while (dist==0||!myNode.pos.endsWith("Z")) {
-			var myStep = insturctions.charAt((int)((step+dist) % insturctions.length()));
-			//System.out.println(myNode +"  "+myStep);
-			myNode = nodes.get(myNode.getNext(myStep));
-			dist +=1;
+		var jumpPos = jumpStart;
+		long dist = 0;
+		while (dist==0 || !jumpPos.nodeid.endsWith("Z")) {
+			jumpPos = new JumpPos(this.nodes.get(jumpPos.nodeid).getNextNodeId(this.insturctions[jumpPos.ipos]), (jumpPos.ipos + 1) % this.insturctions.length);
+			dist += 1;
 		}
-		jumps.put(nodeid+instructionPointer,new Jump(dist,myNode.pos));
+		jump = new Jump(dist, jumpPos.nodeid);
+		jumps.put(jumpStart,jump);
+		return new Ghost(myGhost.step + jump.dist, jump.nodeid);
+	}
 
-
-	};
-
-	private Map<NodePos,NodePos> nextPositions = new TreeMapt<>();
 	private MySolution play2() {
 		long step = 0L;
-		var myPositions = this.nodes.values().stream().filter(node->node.pos.endsWith("A")).map(node->new NodePos(0L,node)).collect(Collectors.toList());
-		//System.out.println(myNodes);
+		var myGhosts = this.nodes.values().stream().filter(node->node.nodeid.endsWith("A")).map(node->new Ghost(0L,node.nodeid)).collect(Collectors.toList()).toArray(new Ghost[0]);
+		//System.out.println(Arrays.stream(myGhosts).map(Ghost::toString).collect(Collectors.toList()));
 		long minStep = 0L;
 		long maxStep = 1L;
-		thile (minStep<maxStep) {
-			for (int i=0;i<myPositions.size();i++) {
-				var myPosition = myPositions.get(i);
-				thile (myPosition.step <maxStep){
-					checkNextPositionExists(myPositions.get(i));
-					myPosition = nextPositions.get(myPosition);
+		while (minStep<maxStep) {
+			minStep = maxStep;
+			for (int i=0;i<myGhosts.length;i++) {
+				while (myGhosts[i].step<maxStep){
+					myGhosts[i] = ghoststep(myGhosts[i]);
 				}
-				myPositions.set(i,nodes.get(myPositions.get(i).getNext(myStep)));
+				maxStep = myGhosts[i].step;
 			}
-
 		}
-
-		while (myNodes.stream().anyMatch(node->!node.pos.endsWith("Z"))) {
-			var myStep = insturctions.charAt((int)(step % insturctions.length()));
-			for (int i=0;i<myNodes.size();i++) {
-				myNodes.set(i,nodes.get(myNodes.get(i).getNext(myStep)));
-			}
-			//System.out.println(myNodes);
-			step +=1;
-		}
-		System.out.println(step);
+		System.out.println(maxStep);
+		System.out.println("---");
 		return this;
 	}
 
 	public static void main(String args[]) {
 		try {
+			Instant start = Instant.now();
             new MySolution("sample.txt").play1().play2();
 			new MySolution("sample2.txt").play2();
             new MySolution("input.txt").play1().play2();
+			Instant end = Instant.now();
+			var duration = Duration.between(start, end);
+			long HH = duration.toHours();
+			long MM = duration.toMinutesPart();
+			long SS = duration.toSecondsPart();
+			String timeString = String.format("Time elapsed (hh:mm:ss) %02d:%02d:%02d", HH, MM, SS);
+			System.out.println(timeString);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-
 	}
 
 }
+/*
+========== Processing sample.txt ==========
+2
+---
+2
+---
+========== Processing sample2.txt ==========
+6
+---
+========== Processing input.txt ==========
+18727
+---
+18024643846273
+---
+00:01:33
+
+ */
