@@ -116,6 +116,8 @@ public class Y23Day10 {
 		int startDir;
 		Pos currentPos;
 		Pos previousPos;
+		Pos check1Pos;
+		Pos check2Pos;
 		Set<Pos> path;
 		Set<Pos> fill;
 		int dir;
@@ -177,6 +179,8 @@ public class Y23Day10 {
 				int fillDir = rot(dir, fillRot);
 				Pos fillPos = currentPos.move(fillDir);
 //				System.out.println("AT "+currentPos+" "+getRoad(currentPos)+" "+DIRS.charAt(dir)+" CHECKING "+fillPos);
+				check1Pos = fillPos;
+				check2Pos = fillPos;
 				if (!fill.contains(fillPos)) {
 					System.out.println("ADDING "+fillPos);
 					if (!fillField(fillPos)) {
@@ -187,6 +191,7 @@ public class Y23Day10 {
 					int fillDir2 = rot(fillDir, fillRot);
 					Pos fillPos2 = currentPos.move(fillDir2);
 //					System.out.println("AT "+currentPos+" "+getRoad(currentPos)+" "+DIRS.charAt(dir)+" CHECKING2 "+fillPos2);
+					check2Pos = fillPos;
 					if (!fill.contains(fillPos2)) {
 //						System.out.println("ADDING "+fillPos2);
 						if (!fillField(fillPos2)) {
@@ -228,6 +233,11 @@ public class Y23Day10 {
 					}
 					if (path.contains(pos)) {
 						color = "byellow";
+					}
+					if (pos.equals(check1Pos) || pos.equals(check2Pos)) {
+						if (!fill.contains(pos) || path.contains(pos)) {
+							color = "borange";
+						}
 					}
 					if (pos.equals(currentPos) || pos.equals(previousPos)) {
 						color = "bblack";

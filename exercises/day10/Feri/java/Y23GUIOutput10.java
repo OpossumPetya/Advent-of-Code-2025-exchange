@@ -194,6 +194,7 @@ class Y23GUIOutput10 {
     	addBackgroundStyle(Color.BLACK,  Color.WHITE,  "bblack",  "bbl", "b1");
     	addBackgroundStyle(Color.YELLOW, Color.BLACK,  "byellow", "bye", "b2");
     	addBackgroundStyle(Color.RED,    Color.WHITE,  "bred",    "bre", "b3");
+    	addBackgroundStyle(Color.ORANGE, Color.BLACK,  "borange", "bor", "b4");
     }
     
     private void appendToPane(JTextPane tp, String msg, AttributeSet aset) {
