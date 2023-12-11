@@ -1,9 +1,9 @@
 import java.util.Objects;
 
-public class JumpPos implements Comparable<JumpPos>{
+public class Position implements Comparable<Position>{
     public String nodeid;
     public int ipos;
-    public JumpPos(String nodeid, int ipos) {
+    public Position(String nodeid, int ipos) {
         this.nodeid = nodeid;
         this.ipos = ipos;
     }
@@ -17,12 +17,20 @@ public class JumpPos implements Comparable<JumpPos>{
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        JumpPos oJumpPos = (JumpPos) o;
+        Position oJumpPos = (Position) o;
         return ipos == oJumpPos.ipos && Objects.equals(nodeid, oJumpPos.nodeid);
     }
 
     @Override
-    public int compareTo(JumpPos o) {
+    public int compareTo(Position o) {
         return this.ipos!=o.ipos ? Integer.compare(this.ipos,o.ipos) : this.nodeid.compareTo(o.nodeid);
+    }
+
+    @Override
+    public String toString() {
+        return "Position{" +
+                "nodeid='" + nodeid + '\'' +
+                ", ipos=" + ipos +
+                '}';
     }
 }

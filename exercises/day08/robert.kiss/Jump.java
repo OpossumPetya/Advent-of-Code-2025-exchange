@@ -1,8 +1,16 @@
 public class Jump {
     public long dist;
-    public String nodeid;
-    public Jump(long dist, String nodeid) {
+    Position position;
+    public Jump(long dist, Position position) {
         this.dist = dist;
-        this.nodeid = nodeid;
+        this.position = position;
+    }
+
+    @Override
+    public String toString() {
+        return "Jump{" +
+                "dist=" + dist +
+                ", dest='" + position.toString() + '\'' +
+                '}';
     }
 }

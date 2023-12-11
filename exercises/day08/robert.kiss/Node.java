@@ -6,8 +6,8 @@ public class Node {
     public String next_l;
     public String next_r;
 
-    public Node(String pos, String next_l, String next_r) {
-        this.nodeid = pos;
+    public Node(String nodeid, String next_l, String next_r) {
+        this.nodeid = nodeid;
         this.next_l = next_l;
         this.next_r = next_r;
     }
