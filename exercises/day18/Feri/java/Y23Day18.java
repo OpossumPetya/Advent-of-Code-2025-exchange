@@ -1,5 +1,8 @@
+
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -14,7 +17,8 @@ import java.util.Set;
  */
 public class Y23Day18 {
 
-	static Y23GUIOutput18 output;
+//	static Y23GUIOutput3D17 output;
+//	static Y23GUIOutput18 output;
 
 	/*
 	 * Example:
@@ -36,10 +40,10 @@ public class Y23Day18 {
 	 * 
 	 */
 
-	private static final String INPUT_RX = "^([RDLU]) ([0-9]+) [(]#([0-9a-f]{6})[)]$";
+	private static final String INPUT_RX = "^([RDLU]) ([0-9]+) [(]#([0-9a-f]{5})([0-3])[)]$";
 	
-	public static record InputData(char dir, int steps, int color) {
-		@Override public String toString() { return dir+" "+steps+"(#"+Integer.toHexString(color)+")"; }
+	public static record InputData(char dir, int steps, int color, char cDir, long cSteps) {
+		@Override public String toString() { return dir+" "+steps+"(#"+Integer.toHexString(color)+") / "+cDir+" "+cSteps; }
 	}
 	
 	public static class InputProcessor implements Iterable<InputData>, Iterator<InputData> {
@@ -61,8 +65,12 @@ public class Y23Day18 {
 			if (line.matches(INPUT_RX)) {
 				char dir = line.replaceFirst(INPUT_RX, "$1").charAt(0);
 				int steps = Integer.parseInt(line.replaceFirst(INPUT_RX, "$2"));
-				int color = Integer.parseInt(line.replaceFirst(INPUT_RX, "$3"), 16);
-				return new InputData(dir, steps, color);
+				String hex5 = line.replaceFirst(INPUT_RX, "$3");
+				int dirNum = line.replaceFirst(INPUT_RX, "$4").charAt(0)-'0';
+				char cDir = DIR_LETTERS.charAt(dirNum);
+				long cSteps = Integer.parseInt(hex5, 16);
+				int color = Integer.parseInt(hex5+dirNum, 16);
+				return new InputData(dir, steps, color, cDir, cSteps);
 			}
 			else {
 				throw new RuntimeException("invalid line '"+line+"'");
@@ -86,9 +94,12 @@ public class Y23Day18 {
 	static int rot(int dir, int rot) { return (dir+rot+4)%4; }
 
 	
-	static record Pos(int x, int y) {
+	static record Pos(long x, long y) {
 		Pos move(int dir) {
 			return new Pos(x+DIR_ADD_X[dir], y+DIR_ADD_Y[dir]);
+		}		
+		Pos move(int dir, long steps) {
+			return new Pos(x+steps*DIR_ADD_X[dir], y+steps*DIR_ADD_Y[dir]);
 		}		
 		public Pos min(Pos other) {
 			if ((x<=other.x) && (y<=other.y)) {
@@ -155,8 +166,8 @@ public class Y23Day18 {
 		}
 		@Override public String toString() {
 			StringBuilder result = new StringBuilder();
-			for (int y=minPos.y; y<=maxPos.y; y++) {
-				for (int x=minPos.x; x<=maxPos.x; x++) {
+			for (long y=minPos.y; y<=maxPos.y; y++) {
+				for (long x=minPos.x; x<=maxPos.x; x++) {
 					Integer col = get(x, y);
 					char c = (col == null) ? '.' : '#';
 					result.append(c);
@@ -167,8 +178,8 @@ public class Y23Day18 {
 		}
 		public String showBorder() {
 			StringBuilder result = new StringBuilder();
-			for (int y=minPos.y-2; y<=maxPos.y+2; y++) {
-				for (int x=minPos.x-2; x<=maxPos.x+2; x++) {
+			for (long y=minPos.y-2; y<=maxPos.y+2; y++) {
+				for (long x=minPos.x-2; x<=maxPos.x+2; x++) {
 					result.append(getChar(x, y, 1));
 				}
 				result.append("\n");
@@ -192,13 +203,13 @@ public class Y23Day18 {
 				currentPositions.addAll(pos.getNeighbours());
 			}
 		}
-		private Integer get(int x, int y) {
+		private Integer get(long x, long y) {
 			return field.get(new Pos(x,y));
 		}
-		private char getChar(int x, int y) {
+		private char getChar(long x, long y) {
 			return getChar(x,y,0);
 		}
-		private char getChar(int x, int y, int border) {
+		private char getChar(long x, long y, int border) {
 			if (outside.contains(new Pos(x,y))) {
 				return 'o';
 			}
@@ -213,8 +224,8 @@ public class Y23Day18 {
 		}
 		public int countCubicmeters() {
 			int result = 0;
-			for (int y=minPos.y; y<=maxPos.y; y++) {
-				for (int x=minPos.x; x<=maxPos.x; x++) {
+			for (long y=minPos.y; y<=maxPos.y; y++) {
+				for (long x=minPos.x; x<=maxPos.x; x++) {
 					char c = getChar(x, y);
 					if ((c == '.') || (c == '#')) {
 						result++;
@@ -225,16 +236,237 @@ public class Y23Day18 {
 		}
 	}
 
+	static record HLine(long fromX, long toX, long y) {
+		public long size() {
+			return toX-fromX+1;
+		}
+		@Override public String toString() {
+			return "("+fromX+".."+toX+","+y+")";
+		}
+	}
+	static record VLine(long x, long fromY, long toY) {
+		public boolean overlaps(VLine other) {
+			return (x == other.x) && (fromY<=other.toY) && (toY>=other.fromY); 
+		}
+		public long size() {
+			return toY-fromY+1;
+		}
+		@Override public String toString() {
+			return "("+x+","+fromY+".."+toY+")";
+		}
+	}
+	
+	static record Area(long fromX, long toX, long fromY, long toY) {
+		@Override public String toString() {
+			return "A["+fromX+".."+toX+","+fromY+".."+toY+"]";
+		}
+		public long calcSize() {
+			return (toX-fromX+1)*(toY-fromY+1);
+		}
+	}
+	
+	public static class World2 {
+		List<HLine> hLines;
+		List<VLine> vLines;
+		List<VLine> innerVLines;
+		List<Area> fillAreas;
+		
+		Map<Pos, HLine> hLineEndpoints;
+		Map<Pos, VLine> vLineEndpoints;
+		Pos startPos;
+		Pos currentPos;
+		Pos maxPos;
+		Pos minPos;
+		public World2() {
+			this.hLines = new ArrayList<>();
+			this.vLines = new ArrayList<>();
+			this.hLineEndpoints = new LinkedHashMap<>();
+			this.vLineEndpoints = new LinkedHashMap<>();
+			this.startPos = new Pos(0,0);
+			this.currentPos = startPos;
+			this.minPos = currentPos;
+			this.maxPos = currentPos;
+			this.fillAreas = new ArrayList<>();
+			this.innerVLines = new ArrayList<>();
+		}
+		public void move(char cDir, long steps) {
+			int dir = DIR_LETTERS.indexOf(cDir);
+			Pos nextPos = currentPos.move(dir, steps);
+			if ((dir == DIR_EAST) || (dir == DIR_WEST)) {
+				HLine hLine = new HLine(nextPos.min(currentPos).x, nextPos.max(currentPos).x, nextPos.y);
+				hLines.add(hLine);
+				if (hLineEndpoints.put(currentPos, hLine) != null) {
+					throw new RuntimeException("duplicate HLine Endpoint "+currentPos);
+				};
+				if (hLineEndpoints.put(nextPos, hLine) != null) {
+					throw new RuntimeException("duplicate HLine Endpoint "+nextPos);
+				};
+			}
+			else {
+				VLine vLine = new VLine(nextPos.x, nextPos.min(currentPos).y, nextPos.max(currentPos).y);
+				vLines.add(vLine);
+				if (vLineEndpoints.put(currentPos, vLine) != null) {
+					throw new RuntimeException("duplicate VLine Endpoint "+currentPos);
+				};
+				if (vLineEndpoints.put(nextPos, vLine) != null) {
+					throw new RuntimeException("duplicate VLine Endpoint "+nextPos);
+				};
+			}
+			currentPos = nextPos;
+			minPos = minPos.min(currentPos);
+			maxPos = maxPos.max(currentPos);
+		}
+		@Override public String toString() {
+			return "SIZE: "+(hLines.size()+vLines.size())+", MIN: "+minPos+", MAX: "+maxPos;
+		}
+		public long countCubicmeters() {
+			long result = 0;
+			List<Long> segments = vLines.stream().map(vl->vl.x).sorted().distinct().toList();
+			System.out.println(segments);
+			long subResult = 0;
+			for (int i=0; i<segments.size()-1; i++) {
+				long fromX = segments.get(i);
+				long toX = segments.get(i+1);
+				List<HLine> crossingHLines = hLines.stream().filter(hl->hl.fromX<=fromX && hl.toX>=toX).sorted((hl1,hl2)->Long.compare(hl1.y, hl2.y)).toList();
+				System.out.println("from:"+fromX+", to: "+toX+" HLines: "+crossingHLines);
+				for (int j=0; j<crossingHLines.size(); j+=2) {
+					HLine hLine1 = crossingHLines.get(j);
+					HLine hLine2 = crossingHLines.get(j+1);
+					Area area = new Area(fromX+1, toX-1, hLine1.y+1, hLine2.y-1);
+					if ((area.fromX<=area.toX) && (area.fromY<=area.toY)) {
+						subResult += area.calcSize();
+						System.out.println(area+" -> "+area.calcSize());
+						fillAreas.add(area);
+					}
+					if (area.fromY <= area.toY) {
+						addInnerVLine(fromX, area.fromY, area.toY);
+						addInnerVLine(toX, area.fromY, area.toY);
+					}
+				}
+			}
+			System.out.println("AREAS:" + subResult);
+			result += subResult;
+			subResult = 0;
+			for (VLine innerVLine:innerVLines) {
+				System.out.println(innerVLine+" -> "+innerVLine.size());
+				subResult += innerVLine.size();
+			}
+			System.out.println("INNERVL:" + result);
+			result += subResult;
+			subResult = 0;
+			for (VLine vLine:vLines) {
+				System.out.println(vLine+" -> "+(vLine.size()-1));
+				subResult += (vLine.size()-1);
+			}
+			System.out.println("VL:" + subResult);
+			result += subResult;
+			subResult = 0;
+			for (HLine hLine:hLines) {
+				System.out.println(hLine+" -> "+(hLine.size()-1));
+				subResult += (hLine.size()-1);
+			}
+			System.out.println("HL:" + subResult);
+			result += subResult;
+			return result;
+		}
+		private void addInnerVLine(long x, long fromY, long toY) {
+			VLine innerVL = new VLine(x, fromY, toY);
+			List<VLine> splitInnerVLines = new ArrayList<>();
+			splitInnerVLines.add(innerVL);
+			boolean changed = true;
+			while (changed) {
+				changed = false;
+				for (VLine outerVLine:vLines) {
+					changed = removeOverlaps(splitInnerVLines, outerVLine);
+					if (changed) {
+						break;
+					}
+				}
+				if (changed) {
+					continue;
+				}
+				for (VLine otherInnerVLine:innerVLines) {
+					changed = removeOverlaps(splitInnerVLines, otherInnerVLine);
+					if (changed) {
+						break;
+					}
+				}
+			}
+			innerVLines.addAll(splitInnerVLines);
+		}
+		private boolean removeOverlaps(List<VLine> newVLines, VLine vLineToCheck) {
+			for (VLine newVLine:newVLines) {
+				if (newVLine.overlaps(vLineToCheck)) {
+					newVLines.remove(newVLine);
+					long minY = Math.min(newVLine.fromY, vLineToCheck.fromY);
+					long maxY = Math.max(newVLine.toY, vLineToCheck.toY);
+					if (minY < vLineToCheck.fromY) {
+						newVLines.add(new VLine(newVLine.x, minY, vLineToCheck.fromY-1));
+					}
+					if (maxY > vLineToCheck.toY) {
+						newVLines.add(new VLine(newVLine.x, vLineToCheck.toY+1, maxY));
+					}
+					return true;
+				}
+			}
+			return false;
+		}
+		
+//		public void show3D(String info) {
+//			long Z_OFFSET=Math.max(1,(maxPos.y-minPos.y)/1000);
+//			double LINE_WIDTH=Math.max(0.1,(maxPos.y-minPos.y)/100000.0);
+//			Y23GUIOutput3D17.DDDObject line;
+//			List<Y23GUIOutput3D17.DDDObject> lines = new ArrayList<>();
+//			for (HLine hLine:hLines) {
+//				double lSize = LINE_WIDTH;
+//				int lType = 30;
+//				line = new Y23GUIOutput3D17.DDDLineObject(hLine.toString(), hLine.fromX,hLine.y,0, hLine.toX,hLine.y,0, lSize, lType);
+//				lines.add(line);
+//			}
+//			for (VLine vLine:vLines) {
+//				double lSize = LINE_WIDTH;
+//				int lType = 30;
+//				line = new Y23GUIOutput3D17.DDDLineObject(vLine.toString(), vLine.x,vLine.fromY,0, vLine.x,vLine.toY,0, lSize, lType);
+//				lines.add(line);
+//			}
+//			for (Area area:fillAreas) {
+//				double lSize = LINE_WIDTH;
+//				int lType = 31;
+//				line = new Y23GUIOutput3D17.DDDLineObject(area+"-1", area.fromX,area.fromY,Z_OFFSET, area.toX,area.fromY,Z_OFFSET, lSize, lType);
+//				lines.add(line);
+//				line = new Y23GUIOutput3D17.DDDLineObject(area+"-2", area.toX,area.fromY,Z_OFFSET, area.toX,area.toY,Z_OFFSET, lSize, lType);
+//				lines.add(line);
+//				line = new Y23GUIOutput3D17.DDDLineObject(area+"-3", area.toX,area.toY,Z_OFFSET, area.fromX,area.toY,Z_OFFSET, lSize, lType);
+//				lines.add(line);
+//				line = new Y23GUIOutput3D17.DDDLineObject(area+"-4", area.fromX,area.toY,Z_OFFSET, area.fromX,area.fromY,Z_OFFSET, lSize, lType);
+//				lines.add(line);
+//			}
+//			for (VLine innerVLine:innerVLines) {
+//				double lSize = LINE_WIDTH;
+//				int lType = 32;
+//				line = new Y23GUIOutput3D17.DDDLineObject(innerVLine.toString(), innerVLine.x,innerVLine.fromY,2*Z_OFFSET, innerVLine.x,innerVLine.toY,2*Z_OFFSET, lSize, lType);
+//				lines.add(line);
+//			}
+//			if (output.scale == 1) {
+//				output.adjustScale(lines);
+//			}
+//			output.addStep(info, lines);
+//		}
+	}
+
 	public static void mainPart1(String inputFile) {
+//		output = new Y23GUIOutput18("Day 18 Part I", true);
 		World world = new World();
 		for (InputData data:new InputProcessor(inputFile)) {
 			System.out.println(data);
 			world.move(data);
 		}
-		System.out.println(world);
-		System.out.println(world.showBorder());
+//		System.out.println(world);
+//		output.addStep(world.toString());
+//		System.out.println(world.showBorder());
+//		output.addStep(world.showBorder());
 		world.fillOutside();
-		System.out.println(world.showBorder());
+//		output.addStep(world.showBorder());
 		System.out.println(world.countCubicmeters());
 	}
 
@@ -242,17 +474,33 @@ public class Y23Day18 {
 
 
 	public static void mainPart2(String inputFile) {
+//		output = new Y23GUIOutput3D17("day 18 part II", true);
+		World2 world2 = new World2();
+		for (InputData data:new InputProcessor(inputFile)) {
+			System.out.println(data);
+//			world2.move(data.dir, data.steps);
+			world2.move(data.cDir, data.cSteps);
+		}
+//		world2.show3D("init");
+		System.out.println(world2);
+		System.out.println(world2.countCubicmeters());
+//		world2.show3D("fill areas");
 	}
 
 
-	public static void main(String[] args) throws FileNotFoundException {
+	public static void main(String[] args) throws FileNotFoundException, URISyntaxException {
 		System.out.println("--- PART I ---");
 //		mainPart1("exercises/day18/Feri/input-example.txt");
 		mainPart1("exercises/day18/Feri/input.txt");               
 		System.out.println("---------------");                           
 		System.out.println("--- PART II ---");
-		mainPart2("exercises/day18/Feri/input-example.txt");
-//		mainPart2("exercises/day18/Feri/input.txt");
+		URL url;
+		System.out.println("--- PART I ---");
+//		url = Y23Day18.class.getResource("/resources/input/aoc23day18/input-example.txt");
+//		url = Y23Day18.class.getResource("/resources/input/aoc23day18/input.txt");
+//		mainPart2(new File(url.toURI()).toString());
+//		mainPart2("exercises/day18/Feri/input-example.txt");
+		mainPart2("exercises/day18/Feri/input.txt");
 		System.out.println("---------------");    
 	}
 	
