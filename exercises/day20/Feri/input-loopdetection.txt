@@ -1,0 +1,83 @@
+broadcaster -> nr, tn, bx, nx
+
+
+
+%kh -> ck
+%zv -> tk
+%tk -> mc
+%mj -> zv
+%qm -> mj
+
+%nx -> nh, dj
+%dj -> nh, qm
+%ck -> nh, sr
+%mc -> kh, nh
+%sr -> nh, jh
+%jh -> pt, nh
+%pt -> nh
+
+&nh -> kh, zv, tk, mj, nx, qm, ph
+
+&ph -> kc, rxloopph
+
+
+%md -> hh
+%tc -> td
+%mr -> rs
+
+%kx -> kb
+%tn -> kb, md
+%hh -> tc, kb
+%td -> kb, bm
+%rs -> kb, dh
+%dh -> kb, lt
+%lt -> cq, kb
+%cq -> kx, kb
+%bm -> kb, mr
+
+&kb -> hn, md, tc, tn, mr
+
+&hn -> kc, rxloophn
+
+
+%jp -> ps
+%fh -> dp
+%bt -> rz
+%hc -> hv
+
+%bz -> rb, mf
+%gq -> hc, mf
+%rb -> mf
+%ps -> mf, fh
+%nr -> jp, mf
+%dp -> bt, mf
+%rz -> gq, mf
+%hv -> mf, bz
+
+&mf -> fh, vn, bt, hc, nr, jp
+
+&vn -> kc, rxloopvn
+
+
+
+%jg -> tv
+
+%bx -> fd, jg
+%qt -> gb, fd
+%gb -> fd, qs
+%rt -> kg, fd
+%kg -> fd, lg
+%bl -> fd
+%lg -> fd, qj
+%tv -> qx, fd
+%qx -> rt, fd
+%qj -> qt, fd
+%qs -> bl, fd
+
+&fd -> bx, kt, jg
+
+&kt -> kc, rxloopkt
+
+
+
+&kc -> rx
