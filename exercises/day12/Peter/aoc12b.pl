@@ -50,10 +50,12 @@ while (<>) {
 
 foreach my $row ( @map ) {
     my @valRep = ();
-    my $inpStr = $$row{str};
 print ": $$row{str} $$row{numLst}\n";
+    my $numstr = $$row{numLst}.",".$$row{numLst}.",".$$row{numLst}.",".$$row{numLst}.",".$$row{numLst};
+    my $inpStr = $$row{str}."?".$$row{str}."?".$$row{str}."?".$$row{str}."?".$$row{str};
+print "! $inpStr $numstr\n";
     $inpStr =~ /^(\.*)(.+)/;
-    completeRep($2, $$row{numLst}, \@valRep, $1);
+    completeRep($2, $numstr, \@valRep, $1);
     $totalscore += $#valRep+1;
 print " ".($#valRep+1)."\n";
 }
