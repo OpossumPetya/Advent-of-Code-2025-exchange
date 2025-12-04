@@ -30,6 +30,7 @@
 
 struct data* read_data(const char *path);
 
+int year = 2025;
 int day = 3;
 int part = 2;
 FILE *solution_out;
