@@ -16,6 +16,7 @@ else
 endif
 
 CFLAGS += -Wall -Wstrict-overflow=5 -pedantic
+LDFLAGS += -lm
 
 BIN_ROOT = bin/
 
@@ -29,9 +30,11 @@ ifeq ($(INTERACTIVE),)
 	 INTERACTIVE = 0
 endif
 ifeq ($(INTERACTIVE),1)
-	 OBJS += $(BINARY)interactive-aoc.o $(BINARY)interactive.o
-	 CFLAGS += -DINTERACTIVE
+	OBJS += $(BINARY)interactive-aoc.o $(BINARY)interactive.o
+	RMOBJ = $(BINARY)aoc.o
+	CFLAGS += -DINTERACTIVE
 else
+	RMOBJ = $(BINARY)interactive-aoc.o
 	OBJS += $(BINARY)aoc.o
 endif
 
@@ -42,6 +45,7 @@ all:	$(TARGET)
 $(TARGET):	$(TARGET_WITH_PATH)
 
 $(TARGET_WITH_PATH):	$(OBJS)
+	if test -f $(RMOBJ); then rm $(RMOBJ); fi
 	$(CC) -o $(TARGET_WITH_PATH) $^ $(LDFLAGS)
 	echo FINISHED $(TARGET)
 

@@ -162,19 +162,40 @@ static void recalc_header_footer_sizes() {
 			+ footer_display_lines;
 }
 
+static char* utf_next(char *c, size_t len) {
+	if (!len)
+		abort();
+	unsigned char *uc = (void*) c;
+	if (*uc <= 0x7F)
+		return c + 1;
+	if (*uc <= 0xDF && len >= 2)
+		return c + 2;
+	if (*uc <= 0xEF && len >= 3)
+		return c + 3;
+	if (*uc <= 0xF7 && len >= 4)
+		return c + 4;
+	return c + 1;
+}
+
 static char* text_end(char *c, size_t len, size_t max_text, size_t *real_text) {
 	size_t rt = 0;
-	while (rt < max_text) {
-#define min_len (len < (max_text - rt) ? len : (max_text - rt))
-		char *c2 = memchr(c, ESC_C, min_len);
-		if (!c2) {
-			if (real_text)
-				*real_text = rt + len;
-			return c + min_len;
+	while (rt != max_text) {
+		char *c2 = memchr(c, ESC_C, len);
+		if (!c2)
+			c2 = c + len;
+		while (c != c2) {
+			char *c3 = utf_next(c, c2 - c);
+			len -= c3 - c;
+			c = c3;
+			if (++rt == max_text) {
+				if (real_text)
+					*real_text = rt;
+				return c3;
+			}
 		}
-		len -= c2 - c;
-		rt += c2 - c;
-		if (!min_len) {
+		if (!len) {
+			if (real_text)
+				*real_text = rt;
 			return c2;
 		}
 		c = c2 + 1;
@@ -205,8 +226,8 @@ static char* text_end(char *c, size_t len, size_t max_text, size_t *real_text) {
 		--len;
 	}
 	if (real_text)
-		*real_text = rt + len;
-	return c + len;
+		*real_text = rt;
+	return c;
 }
 
 static char* show_line(size_t l, char *pos, char *end) {
@@ -218,7 +239,20 @@ static char* show_line(size_t l, char *pos, char *end) {
 		if (!eol)
 			eol = end;
 		if (cur.x != min_pos.x) {
+			char *p = pos;
 			pos = text_end(pos, eol - pos, cur.x - min_pos.x, 0);
+			while (223) {
+				p = memchr(p, ESC_C, pos - p);
+				if (!p)
+					break;
+				char *np = memchr(p, C_END_C, pos - p);
+				if (!np++)
+					abort();
+				ensure_buf(np - p);
+				memcpy(buf + buf_end_pos, p, np - p);
+				buf_end_pos += np - p;
+				p = np;
+			}
 		}
 		char *e = text_end(pos, eol - pos, display_sizes.x - side_columns, 0);
 		size_t need = e - pos;
@@ -255,11 +289,10 @@ static void show() {
 	}
 	if (decorations) {
 		int add = snprintf(buf + buf_end_pos, buf_capacity - buf_end_pos,
-				RESET
-				ERASE_COMPLETE_DISPLAY CURSOR_START_OF_DISPLAY
-				"day %d part %d on file %s (world %ld%s)\n"
-				"world: min: (%ld, %ld), max: (%ld, %ld)\n" //
-				"shown: min: (%ld, %ld), max: (%ld, %ld)\n",//
+				RESET CURSOR_START_OF_DISPLAY
+				"day %d part %d on file %s (world %ld%s)"ERASE_END_OF_LINE"\n"
+				"world: min: (%ld, %ld), max: (%ld, %ld)"ERASE_END_OF_LINE"\n"
+				"shown: min: (%ld, %ld), max: (%ld, %ld)"ERASE_END_OF_LINE"\n", //
 				day, part, puzzle_file, world_idx, add_str, /* line 1 */
 				min_pos.y, min_pos.x, max_pos.y, max_pos.x, /* line 2 */
 				cur.y, cur.x,
@@ -297,9 +330,11 @@ static void show() {
 				eol = print_end - 1;
 			int len = print_end - pos;
 			int need;
+			if (pos + 1 == end)
+				break;
 			do {
 				need = snprintf(buf + buf_end_pos, buf_capacity - buf_end_pos,
-						"%.*s\n", len, pos);
+						"%.*s"ERASE_END_OF_LINE"\n", len, pos);
 			} while (ensure_buf(need));
 			buf_end_pos += need;
 			pos = eol + 1;
@@ -343,8 +378,7 @@ static void show() {
 	for (size_t y = min_pos.y; y < cur.y; y++, pos++)
 		pos = memchr(pos, '\n', end - pos);
 	for (size_t l = 0;
-			l < display_sizes.y - header_lines - footer_display_lines;
-			++l) {
+			l < display_sizes.y - header_lines - footer_display_lines; ++l) {
 		pos = show_line(l, pos, end);
 	}
 	if (*end == ETX_C) {

@@ -17,6 +17,7 @@
 #define CSI ESC "["
 #define C_SEP ";"
 #define C_END "m"
+#define C_END_C 'm'
 
 #define C_RESET             "0"
 #define C_BOLD              "1"
