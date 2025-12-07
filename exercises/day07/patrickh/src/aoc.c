@@ -88,10 +88,10 @@ static void print_space(FILE *str, uint64_t count) {
 
 static void print(FILE *str, struct data *data, uint64_t result, num left,
 		num right, num old) {
-	if (result || 1)
-		fprintf(str, "%sresult=%"I64"u\n", STEP_HEADER, result);
 	if (!do_print && !interactive)
 		return;
+	if (result || 1)
+		fprintf(str, "%sresult=%"I64"u\n", STEP_HEADER, result);
 	if (right)
 		fprintf(str, "%"I64"u->%"I64"u+%"I64"u\n%s", (uint64_t) old,
 				(uint64_t) left, (uint64_t) right, STEP_BODY);
@@ -411,6 +411,9 @@ int main(int argc, char **argv) {
 		if (!strcmp("no-print", argv[idx])) {
 			idx++;
 			do_print = 0;
+#ifdef INTERACTIVE
+			force_non_interactive = 1;
+#endif
 		} else if (!strcmp("print", argv[idx])) {
 			idx++;
 			do_print = 1;
